@@ -138,7 +138,7 @@ public fun create_new_game_provider(_: &GameProviderCap, registry: &mut GameProv
 // Admin: add game to the game provider
 public fun add_slotty_cubes(_: &GameProviderCap, gameProvider: &mut GameProvider, game: slotty_cubes::SlottyCubes){
     let GameProvider { id: _, name, treasury: _, games, game_rounds: _ } = gameProvider;
-    assert!(name == string::utf8(b"RedPanda"), EIncompatibleGameProvider); // Pandoras cubes is owned by redpanda
+    assert!(name == string::utf8(b"Slotty"), EIncompatibleGameProvider); // slotty cubes is owned by Slotty
     
     let gameName = slotty_cubes::get_name(&game);
     bag::add(games, gameName, game)
