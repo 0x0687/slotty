@@ -2,7 +2,7 @@ module slotty::gameprovider;
 
 use std::string;
 use slotty::treasury;
-use slotty::pandoras_cubes;
+use slotty::slotty_cubes;
 use slotty::registration;
 use sui::table;
 use sui::bag;
@@ -71,10 +71,10 @@ public fun start_game_round(playerRegistration: &registration::PlayerRegistratio
     let game_name_copy: string::String = *&gameName;
 
     // Find the game (type needs to be static)
-    let gameObj = bag::borrow<string::String, pandoras_cubes::PandorasCubes>(games, gameName);
+    let gameObj = bag::borrow<string::String, slotty_cubes::SlottyCubes>(games, gameName);
 
     // Check if the treasury can fund this game
-    let max_payout_factor = pandoras_cubes::get_max_payout_factor(gameObj);
+    let max_payout_factor = slotty_cubes::get_max_payout_factor(gameObj);
     assert!(treasury::can_cover_stake(treasury, &stake, max_payout_factor), EInsufficientFundsInTreasury);
 
     // Move the stake to the treasury
@@ -136,10 +136,10 @@ public fun create_new_game_provider(_: &GameProviderCap, registry: &mut GameProv
 }
 
 // Admin: add game to the game provider
-public fun add_pandoras_cubes(_: &GameProviderCap, gameProvider: &mut GameProvider, game: pandoras_cubes::PandorasCubes){
+public fun add_slotty_cubes(_: &GameProviderCap, gameProvider: &mut GameProvider, game: slotty_cubes::SlottyCubes){
     let GameProvider { id: _, name, treasury: _, games, game_rounds: _ } = gameProvider;
     assert!(name == string::utf8(b"RedPanda"), EIncompatibleGameProvider); // Pandoras cubes is owned by redpanda
     
-    let gameName = pandoras_cubes::get_name(&game);
+    let gameName = slotty_cubes::get_name(&game);
     bag::add(games, gameName, game)
 }

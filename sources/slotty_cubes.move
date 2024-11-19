@@ -1,5 +1,5 @@
 
-module slotty::pandoras_cubes;
+module slotty::slotty_cubes;
 
 use std::string;
 use slotty::treasury;
@@ -7,7 +7,7 @@ use slotty::game_utils;
 
 const EInvalidReels: u64 = 1;
 
-public struct PandorasCubes has store {
+public struct SlottyCubes has store {
     name: string::String,
     reels: vector<vector<u8>>,
     accepted_stakes: vector<u64>,
@@ -20,7 +20,7 @@ public struct GameResult {
     symbols: vector<u8>
 }
 
-public fun create_game(name: string::String, reels: vector<vector<u8>>, accepted_stakes: vector<u64>, max_payout_factor: u64): PandorasCubes {
+public fun create_game(name: string::String, reels: vector<vector<u8>>, accepted_stakes: vector<u64>, max_payout_factor: u64): SlottyCubes {
     let nb_of_reels = vector::length(&reels);
     assert!(nb_of_reels == 5, EInvalidReels); // Game should have 5 reels
 
@@ -32,7 +32,7 @@ public fun create_game(name: string::String, reels: vector<vector<u8>>, accepted
         y = y + 1;
     };
 
-    PandorasCubes {
+    SlottyCubes {
         name,
         reels,
         accepted_stakes,
@@ -40,12 +40,12 @@ public fun create_game(name: string::String, reels: vector<vector<u8>>, accepted
     }
 }
 
-public fun get_result(pandoras_cubes: &PandorasCubes, stake: treasury::Stake, rand: u64): GameResult {
+public fun get_result(slotty_cubes: &SlottyCubes, stake: treasury::Stake, rand: u64): GameResult {
     // Determine output vals
     let mut output_symbols = vector::empty<u8>();
-    std::u64::do!(pandoras_cubes.reels.length(),  // for each reel index
+    std::u64::do!(slotty_cubes.reels.length(),  // for each reel index
     |i| {
-        let reel = pandoras_cubes.reels.borrow(i);
+        let reel = slotty_cubes.reels.borrow(i);
         let stopping_value = game_utils::compute_stopping_value(reel, rand, i);
         vector::push_back(&mut output_symbols, stopping_value);
     });
@@ -101,10 +101,10 @@ public fun compute_win_multiplier(symbols: vector<u8>): u64 {
 
 }
 
-public fun get_name(game: &PandorasCubes): string::String {
+public fun get_name(game: &SlottyCubes): string::String {
     game.name
 }
 
-public fun get_max_payout_factor(game: &PandorasCubes): u64 {
+public fun get_max_payout_factor(game: &SlottyCubes): u64 {
     game.max_payout_factor
 }
