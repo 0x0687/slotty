@@ -16,6 +16,7 @@ const EIncompatibleGameProvider: u64 = 1;
 const EGameProviderAlreadyExists: u64 = 2;
 const EInsufficientFundsInTreasury: u64 = 3;
 const ENoActiveGameRound: u64 = 4;
+const EGameDoesNotExist: u64 = 5;
 
 // Represents admin capabilities over the game providers (Capability pattern)
 public struct GameProviderCap has key, store {
@@ -44,6 +45,13 @@ public struct GameRound has store {
     random_seed: u64
 }
 
+public struct GameResult has drop, store {
+    win_multiplier: u64,
+    win_amount: u64,
+    stake_amount: u64,
+    symbols: vector<u8>
+}
+
 public struct GAMEPROVIDER has drop {}
 
 // Initialize the admin capabilities to the deployer of the contract
@@ -65,10 +73,10 @@ fun init(otw: GAMEPROVIDER, ctx: &mut TxContext) {
 #[allow(lint(public_random))]
 public fun start_game_round(playerRegistration: &registration::PlayerRegistration, gameProvider: &mut GameProvider, gameName: string::String, stake: coin::Coin<SUI>, r: &random::Random, ctx: &mut TxContext) {
     let GameProvider { id: _, name: game_provider_name, treasury, games, game_rounds } = gameProvider;
-    assert!(games.contains(gameName), 0);
+    assert!(games.contains(gameName), EGameDoesNotExist);
 
-    let gp_name_copy: string::String = *game_provider_name;
-    let game_name_copy: string::String = *&gameName;
+    let gameProviderName: string::String = *game_provider_name;
+    let gameName: string::String = *&gameName;
 
     // Find the game (type needs to be static)
     let gameObj = bag::borrow<string::String, slotty_cubes::SlottyCubes>(games, gameName);
@@ -87,8 +95,8 @@ public fun start_game_round(playerRegistration: &registration::PlayerRegistratio
     // Create game round
     let gameRoundObj = GameRound {
         stake: stake,
-        game_name: game_name_copy,
-        game_provider_name: gp_name_copy,
+        game_name: gameProviderName,
+        game_provider_name: gameName,
         random_seed
     };
 
@@ -98,14 +106,38 @@ public fun start_game_round(playerRegistration: &registration::PlayerRegistratio
 }
 
 // Shared: settle game round
-public fun settle_game_round(playerRegistration: &registration::PlayerRegistration, gameProvider: &mut GameProvider, ctx: &mut TxContext) {
-    let GameProvider { id: _, name: _, treasury, games: _, game_rounds } = gameProvider;
+#[allow(lint(self_transfer))]
+public fun settle_game_round(playerRegistration: &registration::PlayerRegistration, gameProvider: &mut GameProvider, ctx: &mut TxContext): GameResult {
+    let GameProvider { id: _, name: _, treasury, games, game_rounds } = gameProvider;
     // Check if the player has a round active
     assert!(table::contains(game_rounds, *registration::get_id(playerRegistration)) == true, ENoActiveGameRound);
 
     // Complete the round
-    let game_round = table::borrow_mut(game_rounds, *registration::get_id(playerRegistration));
-    
+    let GameRound { stake, game_name, game_provider_name: _, random_seed} = table::remove(game_rounds, *registration::get_id(playerRegistration));
+
+    if (game_name == string::utf8(b"Slotty Cubes")){
+        // Find the game (type needs to be static)
+        let gameObj = bag::borrow<string::String, slotty_cubes::SlottyCubes>(games, game_name);
+        let slottyGameResult = slotty_cubes::get_result(gameObj, random_seed);
+        let (win_multiplier, symbols) = slotty_cubes::get_result_details(&slottyGameResult);
+        let stake_amount = treasury::get_stake_amount(&stake);
+
+        let winnings = treasury::claim_winnings(treasury, stake, win_multiplier, ctx);
+        let mut win_amount = 0;
+        option::destroy!(winnings, |x| {
+            win_amount = x.value();
+            transfer::public_transfer(x, ctx.sender());
+        });
+        GameResult {
+            win_multiplier,
+            win_amount: win_amount,
+            stake_amount,
+            symbols
+        }
+    }
+    else {
+        abort EGameDoesNotExist
+    }
 
 }
 

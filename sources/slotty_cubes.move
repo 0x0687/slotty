@@ -2,7 +2,6 @@
 module slotty::slotty_cubes;
 
 use std::string;
-use slotty::treasury;
 use slotty::game_utils;
 
 const EInvalidReels: u64 = 1;
@@ -14,9 +13,8 @@ public struct SlottyCubes has store {
     max_payout_factor: u64
 }
 
-public struct GameResult {
+public struct SlottyGameResult has drop {
     win_multiplier: u64,
-    stake: treasury::Stake,
     symbols: vector<u8>
 }
 
@@ -40,7 +38,7 @@ public fun create_game(name: string::String, reels: vector<vector<u8>>, accepted
     }
 }
 
-public fun get_result(slotty_cubes: &SlottyCubes, stake: treasury::Stake, rand: u64): GameResult {
+public fun get_result(slotty_cubes: &SlottyCubes, rand: u64): SlottyGameResult {
     // Determine output vals
     let mut output_symbols = vector::empty<u8>();
     std::u64::do!(slotty_cubes.reels.length(),  // for each reel index
@@ -51,7 +49,11 @@ public fun get_result(slotty_cubes: &SlottyCubes, stake: treasury::Stake, rand: 
     });
     // Compute the win multiplier
     let win_multiplier = compute_win_multiplier(*&output_symbols);
-    GameResult { win_multiplier, stake, symbols: output_symbols }
+    SlottyGameResult { win_multiplier, symbols: output_symbols }
+}
+
+public fun get_result_details(result: &SlottyGameResult): (u64, vector<u8>) {
+    (result.win_multiplier, result.symbols)
 }
 
 public fun compute_win_multiplier(symbols: vector<u8>): u64 {
