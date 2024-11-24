@@ -68,5 +68,8 @@ public fun compute_stopping_value(reel: &vector<u8>, rand_seed: u64, rand_offset
     let hash_int = bytes_to_u64(&hash);
     debug::print(&hash_int);
     let stop_index = hash_int % vector::length(reel);
-    *reel.borrow(stop_index)
+    debug::print(&stop_index);
+    let reel_val = *reel.borrow(stop_index);
+    debug::print(&reel_val);
+    reel_val
 }

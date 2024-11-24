@@ -1,2 +1,2 @@
-./build/**
-build/**
+on-chain/build/**
+off-chain/node_modules/**

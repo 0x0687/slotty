@@ -2,6 +2,8 @@
 module slotty::slotty_cubes;
 
 use std::string;
+use std::debug;
+use std::u32;
 use slotty::game_utils;
 
 const EInvalidReels: u64 = 1;
@@ -13,7 +15,7 @@ public struct SlottyCubes has store {
     max_payout_factor: u64
 }
 
-public struct SlottyGameResult has drop {
+public struct SlottyGameResult {
     win_multiplier: u64,
     symbols: vector<u8>
 }
@@ -48,15 +50,17 @@ public fun get_result(slotty_cubes: &SlottyCubes, rand: u64): SlottyGameResult {
         vector::push_back(&mut output_symbols, stopping_value);
     });
     // Compute the win multiplier
-    let win_multiplier = compute_win_multiplier(*&output_symbols);
+    let win_multiplier = compute_win_multiplier(slotty_cubes, *&output_symbols);
+    debug::print(&win_multiplier);
     SlottyGameResult { win_multiplier, symbols: output_symbols }
 }
 
-public fun get_result_details(result: &SlottyGameResult): (u64, vector<u8>) {
-    (result.win_multiplier, result.symbols)
+public fun get_result_details(result: SlottyGameResult): (u64, vector<u8>) {
+    let SlottyGameResult {win_multiplier, symbols} = result;
+    (win_multiplier, symbols)
 }
 
-public fun compute_win_multiplier(symbols: vector<u8>): u64 {
+public fun compute_win_multiplier(slotty_cubes: &SlottyCubes, symbols: vector<u8>): u64 {
     let mut counts = vector[0u8, 0u8, 0u8, 0u8, 0u8]; // We have 5 possible symbols
 
     symbols.do!(|val| {
@@ -98,7 +102,12 @@ public fun compute_win_multiplier(symbols: vector<u8>): u64 {
         else if (count == 5){
             base_mul = base_mul * 3;
         };
+        if (base_mul > slotty_cubes.max_payout_factor){
+            slotty_cubes.max_payout_factor
+        }
+        else {
         base_mul
+        }
     }
 
 }
@@ -109,4 +118,9 @@ public fun get_name(game: &SlottyCubes): string::String {
 
 public fun get_max_payout_factor(game: &SlottyCubes): u64 {
     game.max_payout_factor
+}
+
+#[test_only]
+public fun destroy_game(slotty_cubes: SlottyCubes) {
+    let SlottyCubes {name: _, reels: _, accepted_stakes: _, max_payout_factor: _} = slotty_cubes;
 }

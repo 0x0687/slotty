@@ -62,6 +62,7 @@ public fun get_stake_amount(stake: &Stake): u64 {
     stake.amount
 }
 
+
 public fun destroy_treasury(treasury: Treasury) {
     let Treasury {balance} = treasury;
     balance.destroy_zero();

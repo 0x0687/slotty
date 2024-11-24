@@ -44,7 +44,7 @@ fun compute_value_correct() {
     // hash of 123452 is 2d75c1a2d01521e3026aa1719256a06604e7bc99aab149cb8cc7de8552fa820d
     // which gives (0x2d75c1a2d01521e3 % 5) <--- can run this directly in python
     // which is 1
-    // which should give 2 as a result input_vec[0]
+    // which should give 2 as a result input_vec[1]
     assert!(compute_stopping_value(&input_vec, 12345u64, 2u64) == 2);
     // EXAMPLE 3
     // hash of 123453 77f919b0fff753c0a6169c8adfe2e7a570321d7009894d9d121ba77e2684f647
