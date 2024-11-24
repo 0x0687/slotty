@@ -1,2 +1,2 @@
-on-chain/build/**
-off-chain/node_modules/**
+packages/slotty/build/**
+scripts/node_modules/**
